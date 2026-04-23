@@ -3,7 +3,7 @@ library(tidyverse)
 library(sf)
 library(dplyr)
 library(lwgeom)
-
+library(here)
 ## Disclaimer
 ## Os dados provenientes de como APP_1, APP_2 e APP_3 foram diretamente baixados do banco de dados do CAR.
 ## O dado nomeado como car_cadastro foi baixado diretamente do CAR.
@@ -16,16 +16,31 @@ library(lwgeom)
 ## Only the centroid of the CAR  table will become the geometry  for APP.
 ## App has several polygons with geometries issues in respect of Well-Known Text. The choice was a way to tackle these inconsistencies. `
 
+
+## Folder with Paths 
+# ---------------------------
+# PATHS
+# ---------------------------
+
+app_dir <- here("data", "APP")
+car_dir <- here("data", "AREA_IMOVEL")
+out_rds <- here("outputs", "rds")
+out_shp <- here("outputs", "shp")
+
+dir_create(out_rds)
+dir_create(out_shp)
+
+#base_dir <- "D:/Desktop/Dados-Geo-Espaciais/Dados-CAR/SC/APP"
+
 # Pre Process APP data
-list_app_path <- c(
-  "D:/Desktop/Dados-Geo-Espaciais/Dados-CAR/SC/APP/APPS_1.shp",
-  "D:/Desktop/Dados-Geo-Espaciais/Dados-CAR/SC/APP/APPS_2.shp",
-  "D:/Desktop/Dados-Geo-Espaciais/Dados-CAR/SC/APP/APPS_3.shp"
+list_app_path <- fs::path(
+  app_dir,
+  paste0("APPS_", 1:3, ".shp")
 )
 
-app_names <- c('app1', 'app2', 'app3')
-filtered_list <- list()
+app_names <- paste0("app", 1:3)
 
+filtered_list <- list()
 for (i in seq_along(list_app_path)) {
   # Read data
   app_data <- st_read(list_app_path[i])
@@ -56,33 +71,34 @@ for (i in seq_along(list_app_path)) {
 # Combine results
 filtered_output <- bind_rows(filtered_list, .id = "app_source")
 
+## SAVE - LOAD 
 ##Save filtered_output
-saveRDS(
-  filtered_output,
-  file = 'D:/Desktop/bella_bella/APP/agora_vai/trat_completo.Rda'
-)
+rds_path <- file.path(out_rds, "trat_completo.rds")
+
+saveRDS(filtered_output, rds_path)
 
 ## Read it back 
-filtered_output <- readRDS(
-  'D:/Desktop/bella_bella/APP/agora_vai/trat_completo.Rda'
-)
+filtered_output <- readRDS(rds_path)
 
-# To load it later:
-filtered_output <- readRDS('D:/Desktop/bella_bella/APP/agora_vai/trat_completo.Rda')
-
-#centroid_app_car <- st_read('D:/Desktop/bella_bella/APP/agora_vai/App_CAR_centroid.shp')
-
-# ----------------------------------------------------------------------------------------
 ## JOIN
 ## This part of the  code will join the CAR dataset with the filtered_output
 # given by the Unique identificador CAR_code
 
-## Load CAR cadastro
-car_cadastro <- st_read('D:/Desktop/Dados-Geo-Espaciais/Dados-CAR/SC/AREA-IMOVEL/AREA_IMOVEL_1.shp')
-
+# LOAD CAR + CENTROID
 ## Load Centroid CAR
-centroid <- st_read('../../APP/Centroid_Area_Imovel/centroid.shp')
+## Load CAR cadastro
+car_cadastro <- st_read(
+  file.path(car_dir, "AREA_IMOVEL_1.shp"),
+  quiet = TRUE
+)
 
+centroid <- st_read(
+  file.path(app_dir, "Centroid_Area_Imovel", "centroid.shp"),
+  quiet = TRUE
+)
+
+## Data Cleaning - Untrustworthy data
+## The data from CAR has several inconsistencies regarding the des_condic field.
 ##  Analysis of duplicate before join
 # Check for duplicate keys in each dataset
 # Get all duplicates (including first occurrence)
@@ -113,10 +129,10 @@ joined_app_centroid <- filtered_output_unique %>%
   st_as_sf()
 
 
-## Save join
 st_write(
   joined_app_centroid,
-  'D:/Desktop/bella_bella/APP/agora_vai/App_CAR_centroid.shp'
+  file.path(out_shp, "App_CAR_centroid.shp"),
+  delete_dsn = TRUE
 )
 
 ##--------------------------------------------------------------------------------------
@@ -143,9 +159,14 @@ print(time.taken)
 
 
 ## Write a new shp file
-out_path <- '../../APP/agora_vai/App_CAR_Groupby_Imovel.shp'
-st_write(result_cod_imovel,
-         out_path)
+# out_path <- '../../APP/agora_vai/App_CAR_Groupby_Imovel.shp'
+# st_write(result_cod_imovel,
+#          out_path)
+st_write(
+  result_cod_imovel,
+  file.path(out_shp, "App_CAR_Groupby_Imovel.shp"),
+  delete_dsn = TRUE
+)
 
 ## Groupby - Tipo de APP a ser Restaurada
 start.time <- Sys.time()
@@ -165,8 +186,13 @@ end.time <- Sys.time()
 time.taken <- round(end.time - start.time,2)
 print(time.taken)
 
-out_path <- '../../APP/agora_vai/App_CAR_Groupby_cod_tema.shp'
-st_write(result_cod_tema,
-         out_path)
+# out_path <- '../../APP/agora_vai/App_CAR_Groupby_cod_tema.shp'
+# st_write(result_cod_tema,
+#          out_path)
+st_write(
+  result_cod_tema,
+  file.path(out_shp, "App_CAR_Groupby_cod_tema.shp"),
+  delete_dsn = TRUE
+)
 
 

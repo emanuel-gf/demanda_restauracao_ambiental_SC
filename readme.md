@@ -24,6 +24,12 @@ blablabla
 2 - 
 ```
 
+As categorias presentes de APP a restaurar provenientes dos arquivos de APP foram devidamente filtradas de acordo com a seguinte categorias?
+
+Categoria / INDEX    
+Area de Preservacao Permanente a recompor de rio ate 10 metros - 3 
+Area de Preservacao Permanente a recompor de rio ate 50 metros - 4 
+
 Tratamento de Dados
 
 Os dados foram retirados pelo site do CAR em tres subsequentes .shp files. 
@@ -31,3 +37,28 @@ O processamento dos dados envolve a análise de 3 principais dados.
 
 1 - Dados de  e artigo
 2 - Vou continuar daqui explicando sobre as decisoes no processo de filtragem e problemas com acentuacao e ASCII characters 
+
+
+# Organizacao dos arquivos
+
+```bash
+project/
+├── data/
+│   ├── APP/
+│   │   ├── APPS_1.shp
+│   │   ├── APPS_2.shp
+│   │   ├── APPS_3.shp
+│   │   └── Centroid_Area_Imovel/
+│   │       └── centroid.shp
+│   └── AREA_IMOVEL/
+│       └── AREA_IMOVEL_1.shp
+│
+├── outputs/
+│   ├── rds/
+│   └── shp/
+│
+├── scripts/
+│   └── processing.R
+│
+└── project.Rproj   # important for here()
+```
