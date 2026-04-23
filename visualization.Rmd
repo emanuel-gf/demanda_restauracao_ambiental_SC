@@ -1,0 +1,134 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Visualization
+
+```{r}
+library(ggplot2)
+library(sp)
+library(tidyverse)
+library(sf)
+library(dplyr)
+library(lwgeom)
+```
+
+## Load the data 
+```{r}
+data <- st_read('../../APP/dados_tratados/all_app_tratado.shp')
+```
+
+## Visualize 
+
+### Histograms
+
+-- Tamanho ded propriedade(ha)
+```{r}
+library(scales) # For pretty axis formatting
+
+# Histogram 1: Total Area (with log transformation)
+p1 <- ggplot(data, aes(x = area_tot)) +
+  geom_histogram(fill = "#1f77b4", color = "white", alpha = 0.8, 
+                 bins = 30, boundary = 0) +
+  scale_x_log10(
+   # limits = c(0,100000),
+    labels = trans_format("log10", math_format(10^.x)),
+    breaks = trans_breaks("log10", function(x) 10^x)
+  ) +
+  labs(title = "Distribution of Total Area (Log Scale)",
+       x = "Total Area (hec)",
+       y = "Count") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    panel.grid.minor = element_blank(),
+    axis.title = element_text(size = 12)
+  )
+
+print(p1)
+```
+
+-- Tamanho de APP 
+```{r}
+# Histogram 2: App Area
+p2 <- ggplot(data, aes(x = area_app)) +
+  geom_histogram(fill = "#ff7f0e", color = "white", alpha = 0.8, 
+                 bins = 30) +
+  scale_x_log10(
+   # limits = c(0,100000),
+    labels = trans_format("log10", math_format(10^.x)),
+    breaks = trans_breaks("log10", function(x) 10^x)
+  ) + 
+ # scale_x_continuous(labels = comma) +
+  labs(title = "Distribution of App Area",
+       x = "App Area (m²)",
+       y = "Count") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    panel.grid.minor = element_blank(),
+    axis.title = element_text(size = 12)
+  )
+
+print(p2)
+```
+-- Discrete the area.
+
+ It returns chunks of areas e.g: areas lesser than 10 hec.
+ 
+ Inclui uma nova coluna chamada area_tot_cat contendo os intervalos
+ 
+ 
+```{r}
+library(dplyr)
+
+data <- data %>%
+  mutate(area_tot_cat = cut(area_tot,
+    breaks = c(0, 10.5, 50.5, 100.5, Inf),
+    labels = c("0-10 hec", "11-50 hec", "51-100 hec", ">100 hec"),
+    right = FALSE,  # Ensures [lower, upper) interval
+    include.lowest = TRUE))
+
+# Verify the transformation
+#data %>%
+#  count(area_tot_cat) %>%
+#  arrange(area_tot_cat)
+```
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# First ensure correct ordering of categories
+data <- data %>%
+  mutate(area_tot_cat = factor(area_tot_cat,
+                               levels = c("0-10 hec", "11-50 hec", "51-100 hec", ">100 hec"),
+                               ordered = TRUE))
+
+# Create the plot
+ggplot(data, aes(x = area_tot_cat)) +
+  geom_bar(fill = "#2c7bb6", alpha = 0.85, width = 0.8) +
+  geom_text(aes(label = after_stat(count)), 
+            stat = "count", 
+            vjust = -0.5, 
+            color = "black",
+            size = 3.5) +
+  labs(title = "Property Size Distribution",
+       subtitle = "Categorized total area ranges",
+       x = "Total Area Categories",
+       y = "Number of Properties",
+       caption = "Data source: Your dataset name") +
+  scale_x_discrete(drop = FALSE) +  # Show all categories even if empty
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +  # Add headroom for labels
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "gray50"),
+    axis.title.x = element_text(size = 12, margin = margin(t = 10)),
+    axis.title.y = element_text(size = 12, margin = margin(r = 10)),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+    panel.grid.major.x = element_blank(),
+    plot.caption = element_text(color = "gray60", margin = margin(t = 10))
+  )
+```
+

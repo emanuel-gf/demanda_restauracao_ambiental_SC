@@ -1,0 +1,148 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(sp)
+library(tidyverse)
+library(sf)
+library(dplyr)
+library(lwgeom)
+library(ggplot2)
+library(geobr)
+library(ggrepel)
+```
+```{r}
+data_verif <- st_read('D:/Desktop/bella_bella/APP/filtragem_tentativa/dados_filtrados.shp')
+
+groupby_imov <- st_read('D:/Desktop/bella_bella/APP/filtragem_tentativa/groupby_codimovel.shp')
+```
+
+```{r}
+## rename 
+groupby_imov <- groupby_imov%>%
+  rename(
+  total_app = ttl_r_p,
+  modulo_fiscal = mdl_fsc,
+  area_total = are_ttl
+)
+
+
+```
+
+```{r}
+fitofisionomia <- st_read('D:/Desktop/Dados-Geo-Espaciais/Fitofisionomia/Klein_7classes.shp')
+```
+```{r}
+data_transform <- st_transform(groupby_imov,
+                               32722)
+```
+
+```{r}
+st_crs(data_transform) == st_crs(fitofisionomia)
+```
+
+```{r}
+intersection <- st_join(
+  data_transform,
+  fitofisionomia,
+  join = st_intersects
+)
+```
+```{r}
+st_write(intersection,
+        '../../APP/agora_vai/Fitofisio_APP_CAR.shp')
+```
+```{r}
+fitofisio_sc_geom <- intersection %>%
+  st_drop_geometry() %>%
+  group_by(fid) %>%
+  summarise(count_app = n(),
+            mean_app = mean(total_app),
+            sum_app = sum(total_app),
+            sum_mf = sum(modulo_fiscal),
+            )
+```
+```{r}
+## Merge back in shapefile from IBGE
+fito_sc_merge <- fitofisionomia %>%
+  left_join(fitofisio_sc_geom, by = c("fid" = "fid"))
+```
+```{r}
+st_write(fito_sc_merge,
+         '../../APP/filtragem_tentativa/fito_sc_merge.shp')
+```
+
+
+## AGGREGATE
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+# Get the positions
+agg_by_fito_ordered <- agg_by_fito_ordered %>% 
+   mutate(csum = rev(cumsum(rev(sum_app))), 
+         pos = sum_app/2 + lead(csum, 1),
+         pos = if_else(is.na(pos), sum_app/2, pos),
+         rounde_area_app = round(sum_app/1000)
+         )
+
+ggplot(agg_by_fito_ordered,
+       aes(x = "" ,
+           y = sum_app,
+           fill = name_fito)) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_brewer(palette = "Set1") +
+  geom_label_repel(aes(y = pos, label = paste0(rounde_area_app, "1e3")),
+                   size = 4.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Fitofisionomia - ha")) +
+  theme_void()
+```
+```{r}
+
+
+ggplot(agg_by_fito_ordered,
+       aes(x = "" ,
+           y = sum_app,
+           fill = name_fito)) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_brewer(palette = "Set1") +
+  geom_label_repel(aes(y = pos, label = round(sum_app)),
+                   size = 3.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Fitofisionomia - ha")) +
+  theme_void()
+```
+
+```{r}
+
+ggplot(agg_by_fito_ordered,
+       aes(x = "" ,
+           y = sum_app,
+           fill = name_fito)) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_brewer(palette = "Dark2") +
+  geom_label_repel(aes(y = pos, label = round(sum_app)),
+                   size = 3.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Fitofisionomia - ha")) +
+  theme_void()
+```
+

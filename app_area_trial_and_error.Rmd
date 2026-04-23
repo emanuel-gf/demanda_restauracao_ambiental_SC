@@ -1,0 +1,51 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+## Load libraries 
+library(sp)
+library(tidyverse)
+library(sf)
+library(dplyr)
+library(lwgeom)
+```
+
+```{r}
+caminho_do_arquivo <- '../../APP/APP_centroids_full/all_app.shp'
+
+app_all <- st_read('../../APP/APP_centroids_full/all_app.shp')
+```
+```{r}
+unique_non_tema <- unique(app_all$nom_tema)
+## Display the name of each APP tema 
+unique(app_all$nom_tema)
+```
+
+### Filtering
+
+Filtra os temas do todo o dataset.
+```{r}
+## colocar o numero do index referente de cada tema 
+list_of_tema <- c(
+  1,2#,3,4,5,6,7,8,9 ,10,11,12,13,15,16
+)
+
+```
+
+Filtra o dataset pelos temas escolhidos logo acima e retorna a soma das areas.
+```{r}
+filtered_app <- app_all %>% 
+                filter(nom_tema %in% c(unique_non_tema[list_of_tema]),
+                       municipio %in% "Lages")
+sprintf('Area (hec) %f',sum(filtered_app$num_area))
+```
+
+```{r}
+colnames(app_all)
+```
+
+
+

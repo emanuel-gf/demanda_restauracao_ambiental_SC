@@ -1,0 +1,269 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+```{r}
+groupby_imov$municipio_sem_acento <- clean_municipality_names(groupby_imov$municip)
+```
+
+```{r}
+municp_agg_codimov <- groupby_imov %>%
+  st_drop_geometry() %>%
+  group_by(municipio_sem_acento) %>%
+  summarise(count_app = n(),
+            mean_app = mean(total_app),
+            sum_app = sum(total_app),
+            max_app = max(total_app),
+            median_app = median(total_app)
+            )
+```
+```{r}
+## Merge back in shapefile from IBGE
+sf_merged <- municipio_sf %>%
+  left_join(municp_agg_codimov, by = c("municipio_sem_acento" = "municipio_sem_acento")) 
+```
+```{r}
+st_write(sf_merged,
+         '../../APP/filtragem_tentativa/Municipio_com_app_car.shp')
+```
+
+
+```{r}
+
+# plot
+ggplot() +
+  geom_sf(data=municipio_sf, fill="#2D3E50",
+          color="#FEBF57",
+          size=.15,
+          show.legend = FALSE) +
+  labs(subtitle="Municipios de SC", size=8) +
+  theme_minimal() 
+#  no_axis
+
+```
+
+```{r}
+## Agrupa os ja agrupados dados por id_imovel em municipio. 
+## Calcula numero de APP, media das APP, 
+municp_agg_codimov <- groupby_codimovel %>%
+  st_drop_geometry() %>%
+  group_by(municipio_sem_acento) %>%
+  summarise(count_app = n(),
+            mean_app = mean(ttl_r_p),
+            sum_app = sum(ttl_r_p),
+            max_app = max(ttl_r_p),
+            median_app = median(ttl_r_p)
+            )
+```
+
+```{r}
+# Make the merge
+sf_merged <- municipio_sf %>%
+  left_join(municp_agg_codimov, by = c("municipio_sem_acento" = "municipio_sem_acento")) 
+```
+
+```{r}
+hist(sf_merged$sum_app)
+```
+
+```{r}
+ggplot(sf_merged) +
+  geom_sf(aes(fill = sum_app)) +
+  theme_void()
+```
+```{r}
+ggplot(sf_merged) +
+  geom_sf(aes(fill = sum_app)) +
+theme_void() +
+  scale_fill_viridis_c(
+    trans = "log", breaks = c(1, 10, 50, 100, 500, 1000,2000,5000),
+    name = "Soma das Areas de APP",
+    guide = guide_legend(
+      keyheight = unit(3, units = "mm"),
+      keywidth = unit(12, units = "mm"),
+      direction = 'vertical',
+      label.position = "right",
+      title.position = "top",
+      nrow = 1
+    )
+  ) +
+  labs(
+    title = "Demanda de Restauracao Ambiental por Municipio",
+    subtitle = "Soma das Areas de Passivo",
+    caption = "Data: CAR"
+  ) +
+  theme(
+    text = element_text(color = "#22211d"),
+    plot.background = element_rect(fill = "#f5f5f2", color = NA),
+    panel.background = element_rect(fill = "#f5f5f2", color = NA),
+    legend.background = element_rect(fill = "#f5f5f2", color = NA),
+    plot.title = element_text(
+      size = 16, hjust = 0.01, color = "#4e4d47",
+      margin = margin(
+        b = -0.1, t = 0.4, l = 2,
+        unit = "cm"
+      )
+    ),
+    plot.subtitle = element_text(
+      size = 12, hjust = 0.01,
+      color = "#4e4d47",
+      margin = margin(
+        b = -0.1, t = 0.43, l = 2,
+        unit = "cm"
+      )
+    ),
+    plot.caption = element_text(
+      size = 8,
+      color = "#4e4d47",
+      margin = margin(
+        b = 0.3, r = -99, t = 0.3,
+        unit = "cm"
+      )
+    ),
+    legend.position = c(0.7, 0.00)
+  )
+
+```
+```{r}
+ggplot(sf_merged) +
+  geom_sf(aes(fill = count_app)) +
+  theme_void()
+```
+```{r}
+ggplot(sf_merged) +
+  geom_sf(aes(fill = max_app)) +
+  theme_void()
+```
+
+```{r}
+ggplot(sf_merged) +
+  geom_sf(aes(fill = sum_app)) +
+  theme_void() +
+  scale_fill_viridis_c(
+    trans = "log", breaks = c(1, 10, 50, 100, 500, 1000, 2000, 5000),
+    name = "Soma das Areas de APP",
+    guide = guide_colorbar(
+      direction = "vertical",
+      barwidth = unit(10, "mm"),
+      barheight = unit(80, "mm"),
+      title.position = "top",
+      label.position = "right"
+    )
+  ) +
+  labs(
+    title = "Demanda de Restauracao Ambiental por Municipio",
+    subtitle = "Soma das Areas de Passivo",
+    caption = "Data: CAR"
+  ) +
+  theme(
+    text = element_text(color = "#22211d"),
+    plot.background = element_rect(fill = "#f5f5f2", color = NA),
+    panel.background = element_rect(fill = "#f5f5f2", color = NA),
+    legend.background = element_rect(fill = "#f5f5f2", color = NA),
+    plot.title = element_text(
+      size = 20,
+      hjust = 0.01,
+      color = "#4e4d47",
+      margin = margin(
+        b = -0.1,
+        t = 0.4,
+        l = 2,
+        unit = "cm"
+      )
+    ),
+    plot.subtitle = element_text(
+      size = 15,
+      hjust = 0.01,
+      color = "#4e4d47",
+      margin = margin(
+        b = -0.1, t = 0.43, l = 2,
+        unit = "cm"
+      )
+    ),
+    plot.caption = element_text(
+      size = 10,
+      color = "#4e4d47",
+      margin = margin(
+        b = 0.3, r = -99, t = 0.3,
+        unit = "cm"
+      )
+    ),
+   # legend.position = c(0.9, 0.5)  # Moved to right side of plot
+  )
+```
+```{r}
+big_plot <- ggplot(groupby_codimovel) +
+  geom_sf( data = municipio_sf,
+           fill='grey',
+           alpha=0.3) +
+  geom_point(
+    aes(x = geometry.x, y = geometry.y,
+        size = ttl_r_p, color = ttl_r_p), alpha = 0.9
+  )
+```
+
+```{r}
+# Create a grid 
+grid <- st_make_grid(groupby_codimovel, cellsize = c(0.25, 0.25), square = FALSE) %>% 
+  st_sf(grid_id = 1:length(.))
+
+print(length(unique(grid$grid_id)))
+```
+
+```{r}
+
+#
+# Join points to grid cells and aggregate
+aggregated_points <- groupby_codimovel %>%
+  st_join(grid) %>%
+  group_by(grid_id) %>%
+  summarize(
+    point_count = n(),
+    total_area = sum(ttl_r_p, na.rm = TRUE),
+    # Add other aggregations as needed
+#    #geometry = first(geometry.y)  # Take grid cell geometry
+  )
+```
+
+```{r}
+# Convert to centroids for bubble plotting
+#aggregated_centroids <- st_centroid(aggregated_points)
+
+# Plot
+ggplot() +
+  geom_sf(data = grid) +
+  geom_sf(data = aggregated_points,
+          aes(col = total_area),
+          alpha = 0.7) +
+  scale_size_continuous(name = "Total Area") +
+  theme_minimal()
+```
+
+
+```{r}
+# Plot
+ggplot() +
+  geom_sf(data = grid) +
+  geom_sf(data = aggregated_points,
+          aes(col = total_area),
+          alpha = 0.7
+          ) +
+#  scale_size_continuous(name = "Total Area") +
+scale_fill_viridis_c(
+    trans = "log",
+    breaks = c(100, 5000, 1000, 1500, 2000,2500,3000,4000,5000),
+    name = "Total area",
+    guide = guide_colorbar(
+      direction = "vertical",
+    #  barwidth = unit(10, "mm"),
+     # barheight = unit(80, "mm"),
+    #  title.position = "top",
+    #  label.position = "right"
+    )
+)
+```
+
