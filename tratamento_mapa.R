@@ -5,13 +5,15 @@ library(dplyr)
 library(lwgeom)
 library(ggplot2)
 library(geobr)
+library(here)
+
 
 dados_brutos <- st_read(
-  'D:/Desktop/bella_bella/APP/filtragem_tentativa/dados_filtrados.shp'
+  here("DATA", "SC/APP/filtragem_tentativa/dados_filtrados.shp")
 )
 
 groupby_codimovel <- st_read(
-  'D:/Desktop/bella_bella/APP/filtragem_tentativa/groupby_codimovel.shp'
+  here("DATA", "SC/APP/filtragem_tentativa/groupby_codimovel.shp")
 )
 
 municipio_sf <- geobr::read_municipality(
@@ -39,3 +41,4 @@ dados_brutos$municipio_sem_acento <- clean_municipality_names(dados_brutos$munic
 groupby_codimovel$municipio_sem_acento <- clean_municipality_names(groupby_codimovel$municip)
 
 ## ----------------------------------------
+## save it 

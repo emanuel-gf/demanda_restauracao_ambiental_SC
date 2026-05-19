@@ -12,11 +12,12 @@ library(tidyverse)
 library(sf)
 library(dplyr)
 library(lwgeom)
+library(here())
 ```
 
 ## Load the data 
 ```{r}
-data <- st_read('../../APP/dados_tratados/all_app_tratado.shp')
+data <- st_read(here("DATA", "SC", "APP", "dados_tratados", "all_app_tratado.shp"))
 ```
 
 ## Visualize 
